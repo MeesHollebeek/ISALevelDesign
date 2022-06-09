@@ -2,9 +2,11 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [SerializeField] private Slider _slider;
 
     [Header("Assignables")]
     [Tooltip("this is a reference to the MainCamera object, not the parent of it.")]
@@ -92,6 +94,11 @@ public class PlayerMovement : MonoBehaviour
         Cursor.visible = false;
         readyToJump = true;
         wallNormalVector = Vector3.up;
+
+        _slider.onValueChanged.AddListener((v) =>
+        {
+            sensitivity = v;
+        });
     }
 
 
@@ -126,16 +133,19 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     private void MyInput()
     {
-        x = Input.GetAxisRaw("Horizontal");
-        y = Input.GetAxisRaw("Vertical");
-        jumping = Input.GetButton("Jump");
-        crouching = Input.GetKey(KeyCode.LeftControl);
+        if (!Finish.isPaused)
+        {
+            x = Input.GetAxisRaw("Horizontal");
+            y = Input.GetAxisRaw("Vertical");
+            jumping = Input.GetButton("Jump");
+            crouching = Input.GetKey(KeyCode.LeftControl);
 
-        //Crouching
-        if (Input.GetKeyDown(KeyCode.LeftControl))
-            StartCrouch();
-        if (Input.GetKeyUp(KeyCode.LeftControl))
-            StopCrouch();
+            //Crouching
+            if (Input.GetKeyDown(KeyCode.LeftControl))
+                StartCrouch();
+            if (Input.GetKeyUp(KeyCode.LeftControl))
+                StopCrouch();
+        }
     }
 
     private void StartCrouch()
@@ -243,21 +253,24 @@ public class PlayerMovement : MonoBehaviour
     private float desiredX;
     private void Look()
     {
-        float mouseX = Input.GetAxis("Mouse X") * sensitivity * Time.fixedDeltaTime * sensMultiplier;
-        float mouseY = Input.GetAxis("Mouse Y") * sensitivity * Time.fixedDeltaTime * sensMultiplier;
+        if (!PauseMenu.isPaused && !Finish.isPaused)
+        {
+            float mouseX = Input.GetAxis("Mouse X") * sensitivity * Time.fixedDeltaTime * sensMultiplier;
+            float mouseY = Input.GetAxis("Mouse Y") * sensitivity * Time.fixedDeltaTime * sensMultiplier;
 
-        //Find current look rotation
-        Vector3 rot = playerCam.transform.localRotation.eulerAngles;
-        desiredX = rot.y + mouseX;
+            //Find current look rotation
+            Vector3 rot = playerCam.transform.localRotation.eulerAngles;
+            desiredX = rot.y + mouseX;
 
-        //Rotate, and also make sure we dont over- or under-rotate.
-        xRotation -= mouseY;
-        float clamp = 89.5f;
-        xRotation = Mathf.Clamp(xRotation, -clamp, clamp);
+            //Rotate, and also make sure we dont over- or under-rotate.
+            xRotation -= mouseY;
+            float clamp = 89.5f;
+            xRotation = Mathf.Clamp(xRotation, -clamp, clamp);
 
-        //Perform the rotations
-        playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
-        orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
+            //Perform the rotations
+            playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
+            orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
+        }
     }
 
     private void CounterMovement(float x, float y, Vector2 mag)
@@ -495,5 +508,5 @@ public class PlayerMovement : MonoBehaviour
             rb.AddForce(Vector3.up * Time.deltaTime * rb.mass * 40f * wallRunGravity);
         }
     }
-
+    
 }
